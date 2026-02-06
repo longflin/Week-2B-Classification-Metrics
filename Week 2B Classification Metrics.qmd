@@ -1,0 +1,17 @@
+---
+title: "Week 2B Classification Metrics"
+format: html
+editor: visual
+---
+
+## Week 2B Classification Metrics: Approach
+
+For the week 2B Classification Metrics assignment, I plan to use the data provided in the assignment to calculate the null error rate. I'll also create a plot showing the distribution of the actual class and explain why the null error is important to know when evaluating models.
+
+I will then compute the True Positives, False Positives, True Negatives, and False Negatives using different probability thresholds of 0.2, 0.5, and 0.8.  These results will be presented in three confusion matrices.
+
+Next, I will calculate the accuracy, precision, recall, and F1 score for each threshold and display them in a clear table.
+
+Finally, I will give real-world scenarios where a 0.2 threshold is preferable and where a 0.8 threshold is preferable.
+
+Data Source: https://raw.githubusercontent.com/acatlin/data/refs/heads/master/penguin_predictions.csv
