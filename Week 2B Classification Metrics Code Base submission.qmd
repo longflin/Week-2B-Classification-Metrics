@@ -7,16 +7,19 @@ editor: visual
 
 ## Week 2B Classification Metrics: Overview
 
-For the week 2B Classification Metrics assignment, I plan to use the data provided in the assignment to calculate the null error rate. I'll also create a plot showing the distribution of the actual class and explain why the null error is important to know when evaluating models.
+For this assignment, I used the data provided to calculate the null error rate and created a plot showing the distribution of the actual class. I explain why the null error rate is important to know when evaluating models.
 
-I will then compute the True Positives, False Positives, True Negatives, and False Negatives using different probability thresholds of 0.2, 0.5, and 0.8.  These results will be presented in three confusion matrices.
+Then I calculated the True Positives, False Positives, True Negatives, and False Negatives using different probability thresholds of 0.2, 0.5, and 0.8. These results will be presented in three confusion matrices.
 
-Next, I will calculate the accuracy, precision, recall, and F1 score for each threshold and display them in a clear table.
+Next, I calculate the accuracy, precision, recall, and F1 score for each threshold and display them in a table.
 
-Finally, I will give real-world scenarios where a 0.2 threshold is preferable and where a 0.8 threshold is preferable.
+At the end, I gave a couple real-world scenarios where a 0.2 threshold is preferable and where a 0.8 threshold is preferable.
 
 Data Source: https://raw.githubusercontent.com/acatlin/data/refs/heads/master/penguin_predictions.csv
 
+## Calculating Null Error Rate
+
+Null Error Rate is a baseline metric that indicates how often you would be wrong if you always predicted the majority class. Knowing the null error rate is important when evaluating models because it gives you a baseline which you can use to compare your model with, in order to determine if your model is just guessing the majority class or actually learning patterns.
 
 ```{r}
 library(tidyverse)
@@ -33,105 +36,91 @@ df <- read_csv(
 
 ```{r}
 class_counts <- table(df$sex)
-print(class_counts)
+
+# Find the majority class count and total count
+majority_count <- max(class_counts)
+total_count <- sum(class_counts)
+
+# Calculate the proportion of the majority class
+majority_proportion <- majority_count / total_count
+
+# The null error rate is 1 minus the majority proportion
+null_error_rate <- 1 - majority_proportion
+
+# Print the result
+print(paste("Null Error Rate:", null_error_rate))
 ```
-```{r}
-majority_class <- names(which.max(class_counts))
-print(majority_class)
-```
-```{r}
-null_error_rate <- mean(df != majority_class)
-print(null_error_rate)
-```
-The null error rate is 0.6129032
 
 ```{r}
 library(ggplot2)
 ggplot(df, aes(x = sex, fill = sex)) +
   geom_bar() +
+  geom_text(aes(label = after_stat(count)), stat = "count", vjust = -0.5) +
   labs(title = "Distribution of Sex", x = "Sex", y = "Count") +
   theme_minimal()
 ```
+
 Here is a plot showing the actual distribution of the sex class.
 
-Knowing the null error rate is important when evaluating models because it gives you a baseline which you can use to compare your model with, in order to determine if your model is just guessing the majority class or actually learning patterns.
+## Calculations for 0.2 threshold
 
-
-## Confusion Matrices at Multiple Thresholds
-
-Calculating True Positives
+First we'll start with calculating the True Positives, True Negatives, False Positives, and False Negatives for 0.2 threshold.
 
 ```{r}
-# Function to calculate TP
-get_tp <- function(p, y, t) {
+# Defined threshold
+threshold <- 0.2
+
+# Function to calculate True Positives
+get_true_positives <- function(p, y, t) {
   preds <- ifelse(p >= t, 1, 0)
   sum(preds == 1 & y == 1)
 }
 
-# Results for specified thresholds
-tp_02 <- get_tp(df$.pred_female, df$.pred_class == df$sex, 0.2)
-print(tp_02)
-tp_05 <- get_tp(df$.pred_female, df$.pred_class == df$sex, 0.5)
-print(tp_05)
-tp_08 <- get_tp(df$.pred_female, df$.pred_class == df$sex, 0.8)
-print(tp_08)
-```
+# True Positives for specified threshold
+true_positives_02 <- get_true_positives(df$.pred_female, ifelse(df$sex == "female", 1, 0), threshold)
 
-Calculating True Negatives
-
-```{r}
 # Function to calculate True Negatives
-get_tn <- function(p, y, t) {
+get_true_negatives <- function(p, y, t) {
   preds <- ifelse(p >= t, 1, 0)
   sum(preds == 0 & y == 0)
 }
 
-# Results for specified thresholds
-tn_02 <- get_tn(df$.pred_female, df$.pred_class == df$sex, 0.2)
-print(tn_02)
-tn_05 <- get_tn(df$.pred_female, df$.pred_class == df$sex, 0.5)
-print(tn_05)
-tn_08 <- get_tn(df$.pred_female, df$.pred_class == df$sex, 0.8)
-print(tn_08)
-```
-Calculating False Positives
+# True Negatives for specified threshold
+true_negatives_02 <- get_true_negatives(df$.pred_female, ifelse(df$sex == "female", 1, 0), threshold)
 
-```{r}
 # Function to calculate False Positives
-get_fp <- function(p, y, t) {
+get_false_positives <- function(p, y, t) {
   preds <- ifelse(p >= t, 1, 0)
   sum(preds == 1 & y == 0)
 }
 
-# Results for specified thresholds
-fp_02 <- get_fp(df$.pred_female, df$.pred_class == df$sex, 0.2)
-print(fp_02)
-fp_05 <- get_fp(df$.pred_female, df$.pred_class == df$sex, 0.5)
-print(fp_05)
-fp_08 <- get_fp(df$.pred_female, df$.pred_class == df$sex, 0.8)
-print(fp_08)
-```
-Calculating False Negatives
+# False Positives for specified threshold
+false_positives_02 <- get_false_positives(df$.pred_female, ifelse(df$sex == "female", 1, 0), threshold)
 
-```{r}
 # Function to calculate False Negatives
-get_fn <- function(p, y, t) {
+get_false_negatives <- function(p, y, t) {
   preds <- ifelse(p >= t, 1, 0)
   sum(preds == 0 & y == 1)
 }
 
-# Results for specified thresholds
-fn_02 <- get_fn(df$.pred_female, df$.pred_class == df$sex, 0.2)
-print(fn_02)
-fn_05 <- get_fn(df$.pred_female, df$.pred_class == df$sex, 0.5)
-print(fn_05)
-fn_08 <- get_fn(df$.pred_female, df$.pred_class == df$sex, 0.8)
-print(fn_08)
+# False Negatives for specified threshold
+false_negatives_02 <- get_false_negatives(df$.pred_female, ifelse(df$sex == "female", 1, 0), threshold)
+
+# Create vectors for items and values
+item_names <- c("True Positives", "True Negatives", "False Positives", "False Negatives")
+item_values <- c(true_positives_02, true_negatives_02, false_positives_02, false_negatives_02)
+
+# Combine them into a data frame
+item_table <- data.frame(Item = item_names, Value = item_values)
+
+# Display the table
+print(item_table)
 ```
-Creating a Confusion Matrix for 0.2 threshold
+
+## Creating a Confusion Matrix for 0.2 threshold
 
 ```{r}
-actual_values <- (df$sex == df$.pred_class)
+actual_values <- ifelse(df$sex == "female", 1, 0)
 predicted_probs <- df$.pred_female
 
 # Defined threshold
@@ -142,51 +131,90 @@ threshold <- 0.2
 predicted_values <- ifelse(predicted_probs >= threshold, 1, 0)
 
 # Create the confusion table
-conf_matrix02 <- table(predicted_values, actual_values)
-print(conf_matrix02)
+confusion_matrix_02 <- table(predicted_values, actual_values)
+print(confusion_matrix_02)
 ```
-Calculating the accuracy
-```{r}
-#Grab values from confusion matrix
-TP02 <- 2 # True Positives
-FP02 <- 48 # False Positives
-FN02 <- 4 # False Negatives
-TN02 <- 39 # True Negatives
 
-correct_predictions <- (TP02 + TN02)
+## Calculating Performance Metrics for 0.2 threshold
+
+Calculating the accuracy, precision, recall, f1 score for 0.2 threshold
+
+```{r}
+correct_predictions_02 <- (true_positives_02 + true_negatives_02)
 
 # Total number of observations
-total_observations <- sum(conf_matrix02)
+total_observations_02 <- sum(true_positives_02 + true_negatives_02 + false_positives_02 + false_negatives_02)
 
 # Calculate accuracy
-accuracy02 <- correct_predictions / total_observations
-print(accuracy02)
+accuracy_02 <- correct_predictions_02 / total_observations_02
+
+# Calculate the precision
+precision_02 <- true_positives_02 / (true_positives_02 + false_positives_02)
+
+# Calculate the recall
+recall_02 <- true_positives_02 / (true_positives_02 + false_negatives_02)
+
+# Calculate the f1 score
+f1_score_02 <- 2 * (precision_02 * recall_02) / (precision_02 + recall_02)
+
+# Create vectors for performance metrics
+performance_metrics_names <- c("Accuracy", "Precision", "Recall", "F1 Score")
+performance_metrics_values <- c(accuracy_02, precision_02, recall_02, f1_score_02)
+
+# Combine them into a data frame
+performance_metrics_table <- data.frame("Performance Metric" = performance_metrics_names, Value = performance_metrics_values)
+
+# Display the table
+print(performance_metrics_table)
 ```
-Calculating the precision
+
+## Calculations for 0.5 threshold
+
+First we'll start with calculating the True Positives, True Negatives, False Positives, and False Negatives for 0.5 threshold.
 
 ```{r}
-precision_manual02 <- TP02 / (TP02 + FP02)
-print(precision_manual02)
-```
-Calculating the recall
+# Defined threshold
+threshold <- 0.5
 
-```{r}
-recall_manual02 <- TP02 / (TP02 + FN02)
-print(recall_manual02)
-```
+# Function to calculate True Positives
+get_true_positives <- function(p, y, t) {
+  preds <- ifelse(p >= t, 1, 0)
+  sum(preds == 1 & y == 1)
+}
 
-Calculating the f1 score
+# True Positives for specified threshold
+true_positives_05 <- get_true_positives(df$.pred_female, ifelse(df$sex == "female", 1, 0), threshold)
 
-```{r}
-f1_score_manual02 <- 2 * (precision_manual02 * recall_manual02) / (precision_manual02 + recall_manual02)
-print(f1_score_manual02)
-```
-Create Table to Show Values
+# Function to calculate True Negatives
+get_true_negatives <- function(p, y, t) {
+  preds <- ifelse(p >= t, 1, 0)
+  sum(preds == 0 & y == 0)
+}
 
-```{r}
+# True Negatives for specified threshold
+true_negatives_05 <- get_true_negatives(df$.pred_female, ifelse(df$sex == "female", 1, 0), threshold)
+
+# Function to calculate False Positives
+get_false_positives <- function(p, y, t) {
+  preds <- ifelse(p >= t, 1, 0)
+  sum(preds == 1 & y == 0)
+}
+
+# False Positives for specified threshold
+false_positives_05 <- get_false_positives(df$.pred_female, ifelse(df$sex == "female", 1, 0), threshold)
+
+# Function to calculate False Negatives
+get_false_negatives <- function(p, y, t) {
+  preds <- ifelse(p >= t, 1, 0)
+  sum(preds == 0 & y == 1)
+}
+
+# False Negatives for specified threshold
+false_negatives_05 <- get_false_negatives(df$.pred_female, ifelse(df$sex == "female", 1, 0), threshold)
+
 # Create vectors for items and values
-item_names <- c("Accuracy", "Precision", "Recall", "F1 Score")
-item_values <- c(accuracy02, precision_manual02, recall_manual02, f1_score_manual02)
+item_names <- c("True Positives", "True Negatives", "False Positives", "False Negatives")
+item_values <- c(true_positives_05, true_negatives_05, false_positives_05, false_negatives_05)
 
 # Combine them into a data frame
 item_table <- data.frame(Item = item_names, Value = item_values)
@@ -195,15 +223,13 @@ item_table <- data.frame(Item = item_names, Value = item_values)
 print(item_table)
 ```
 
-
-Creating a Confusion Matrix for 0.5 threshold
+## Creating a Confusion Matrix for 0.5 threshold
 
 ```{r}
-# Sample data (replace with your actual data)
-actual_values <- (df$sex == df$.pred_class) # True class labels
-predicted_probs <- df$.pred_female # Predicted probabilities
+actual_values <- ifelse(df$sex == "female", 1, 0)
+predicted_probs <- df$.pred_female
 
-# Define your desired threshold
+# Defined threshold
 threshold <- 0.5
 
 # Convert probabilities to binary class predictions using the threshold
@@ -211,52 +237,90 @@ threshold <- 0.5
 predicted_values <- ifelse(predicted_probs >= threshold, 1, 0)
 
 # Create the confusion table
-conf_matrix05 <- table(predicted_values, actual_values)
-print(conf_matrix05)
+confusion_matrix_05 <- table(predicted_values, actual_values)
+print(confusion_matrix_05)
 ```
 
-Calculating the accuracy
-```{r}
-#Grab values from confusion matrix
-TP05 <- 3 # True Positives
-FP05 <- 51 # False Positives
-FN05 <- 3 # False Negatives
-TN05 <- 36 # True Negatives
+## Calculating Performance Metrics for 0.5 threshold
 
-correct_predictions <- (TP05 + TN05)
+Calculating the accuracy, precision, recall, f1 score for 0.5 threshold
+
+```{r}
+correct_predictions_05 <- (true_positives_05 + true_negatives_05)
 
 # Total number of observations
-total_observations <- sum(conf_matrix05)
+total_observations_05 <- sum(true_positives_05 + true_negatives_05 + false_positives_05 + false_negatives_05)
 
 # Calculate accuracy
-accuracy05 <- correct_predictions / total_observations
-print(accuracy05)
+accuracy_05 <- correct_predictions_05 / total_observations_05
+
+# Calculate the precision
+precision_05 <- true_positives_05 / (true_positives_05 + false_positives_05)
+
+# Calculate the recall
+recall_05 <- true_positives_05 / (true_positives_05 + false_negatives_05)
+
+# Calculate the f1 score
+f1_score_05 <- 2 * (precision_05 * recall_05) / (precision_05 + recall_05)
+
+# Create vectors for performance metrics
+performance_metrics_names <- c("Accuracy", "Precision", "Recall", "F1 Score")
+performance_metrics_values <- c(accuracy_05, precision_05, recall_05, f1_score_05)
+
+# Combine them into a data frame
+performance_metrics_table <- data.frame("Performance Metric" = performance_metrics_names, Value = performance_metrics_values)
+
+# Display the table
+print(performance_metrics_table)
 ```
-Calculating the precision
+
+## Calculations for 0.8 threshold
+
+First we'll start with calculating the True Positives, True Negatives, False Positives, and False Negatives for 0.8 threshold.
 
 ```{r}
-precision_manual05 <- TP05 / (TP05 + FP05)
-print(precision_manual05)
-```
-Calculating the recall
+# Defined threshold
+threshold <- 0.8
 
-```{r}
-recall_manual05 <- TP05 / (TP05 + FN05)
-print(recall_manual05)
-```
+# Function to calculate True Positives
+get_true_positives <- function(p, y, t) {
+  preds <- ifelse(p >= t, 1, 0)
+  sum(preds == 1 & y == 1)
+}
 
-Calculating the f1 score
+# True Positives for specified threshold
+true_positives_08 <- get_true_positives(df$.pred_female, ifelse(df$sex == "female", 1, 0), threshold)
 
-```{r}
-f1_score_manual05 <- 2 * (precision_manual05 * recall_manual05) / (precision_manual05 + recall_manual05)
-print(f1_score_manual05)
-```
-Create Table to Show Values
+# Function to calculate True Negatives
+get_true_negatives <- function(p, y, t) {
+  preds <- ifelse(p >= t, 1, 0)
+  sum(preds == 0 & y == 0)
+}
 
-```{r}
+# True Negatives for specified threshold
+true_negatives_08 <- get_true_negatives(df$.pred_female, ifelse(df$sex == "female", 1, 0), threshold)
+
+# Function to calculate False Positives
+get_false_positives <- function(p, y, t) {
+  preds <- ifelse(p >= t, 1, 0)
+  sum(preds == 1 & y == 0)
+}
+
+# False Positives for specified threshold
+false_positives_08 <- get_false_positives(df$.pred_female, ifelse(df$sex == "female", 1, 0), threshold)
+
+# Function to calculate False Negatives
+get_false_negatives <- function(p, y, t) {
+  preds <- ifelse(p >= t, 1, 0)
+  sum(preds == 0 & y == 1)
+}
+
+# False Negatives for specified threshold
+false_negatives_08 <- get_false_negatives(df$.pred_female, ifelse(df$sex == "female", 1, 0), threshold)
+
 # Create vectors for items and values
-item_names <- c("Accuracy", "Precision", "Recall", "F1 Score")
-item_values <- c(accuracy05, precision_manual05, recall_manual05, f1_score_manual05)
+item_names <- c("True Positives", "True Negatives", "False Positives", "False Negatives")
+item_values <- c(true_positives_08, true_negatives_08, false_positives_08, false_negatives_08)
 
 # Combine them into a data frame
 item_table <- data.frame(Item = item_names, Value = item_values)
@@ -265,14 +329,13 @@ item_table <- data.frame(Item = item_names, Value = item_values)
 print(item_table)
 ```
 
-Creating a Confusion Matrix for 0.8 threshold
+## Creating a Confusion Matrix for 0.8 threshold
 
 ```{r}
-# Sample data (replace with your actual data)
-actual_values <- (df$sex == df$.pred_class) # True class labels
-predicted_probs <- df$.pred_female # Predicted probabilities
+actual_values <- ifelse(df$sex == "female", 1, 0)
+predicted_probs <- df$.pred_female
 
-# Define your desired threshold
+# Defined threshold
 threshold <- 0.8
 
 # Convert probabilities to binary class predictions using the threshold
@@ -280,63 +343,45 @@ threshold <- 0.8
 predicted_values <- ifelse(predicted_probs >= threshold, 1, 0)
 
 # Create the confusion table
-conf_matrix08 <- table(predicted_values, actual_values)
-print(conf_matrix08)
+confusion_matrix_08 <- table(predicted_values, actual_values)
+print(confusion_matrix_08)
 ```
 
-Calculating the accuracy
-```{r}
-#Grab values from confusion matrix
-TP08 <- 4 # True Positives
-FP08 <- 51 # False Positives
-FN08 <- 2 # False Negatives
-TN08 <- 36 # True Negatives
+## Calculating Performance Metrics for 0.8 threshold
 
-correct_predictions <- (TP08 + TN08)
+Calculating the accuracy, precision, recall, f1 score for 0.8 threshold
+
+```{r}
+correct_predictions_08 <- (true_positives_08 + true_negatives_08)
 
 # Total number of observations
-total_observations <- sum(conf_matrix08)
+total_observations_08 <- sum(true_positives_08 + true_negatives_08 + false_positives_08 + false_negatives_08)
 
 # Calculate accuracy
-accuracy08 <- correct_predictions / total_observations
-print(accuracy08)
-```
-Calculating the precision
+accuracy_08 <- correct_predictions_08 / total_observations_08
 
-```{r}
-precision_manual08 <- TP08 / (TP08 + FP08)
-print(precision_manual08)
-```
-Calculating the recall
+# Calculate the precision
+precision_08 <- true_positives_08 / (true_positives_08 + false_positives_08)
 
-```{r}
-recall_manual08 <- TP08 / (TP08 + FN08)
-print(recall_manual08)
-```
+# Calculate the recall
+recall_08 <- true_positives_08 / (true_positives_08 + false_negatives_08)
 
-Calculating the f1 score
+# Calculate the f1 score
+f1_score_08 <- 2 * (precision_08 * recall_08) / (precision_08 + recall_08)
 
-```{r}
-# Calculate F1 Score
-f1_score_manual08 <- 2 * (precision_manual08 * recall_manual08) / (precision_manual08 + recall_manual08)
-print(f1_score_manual08)
-```
-Create Table to Show Values
-
-```{r}
-# Create vectors for items and values
-item_names <- c("Accuracy", "Precision", "Recall", "F1 Score")
-item_values <- c(accuracy08, precision_manual08, recall_manual08, f1_score_manual08)
+# Create vectors for performance metrics
+performance_metrics_names <- c("Accuracy", "Precision", "Recall", "F1 Score")
+performance_metrics_values <- c(accuracy_08, precision_08, recall_08, f1_score_08)
 
 # Combine them into a data frame
-item_table <- data.frame(Item = item_names, Value = item_values)
+performance_metrics_table <- data.frame("Performance Metric" = performance_metrics_names, Value = performance_metrics_values)
 
 # Display the table
-print(item_table)
+print(performance_metrics_table)
 ```
 
 ## Threshold Use Cases
 
 One real world scenario where a 0.2 threshold is preferable is cancer screening because missing a positive case (false negative) is much more dangerous than flagging a negative case (false positive).
 
-One real world scenario where a 0.8 threshold is preferable is credit card fraud detection because credit card companies want to reduce how often false positives happen.  Otherwise customers may not be happy with the constant declines when they try to make a purchase that are slightly unusual.
+One real world scenario where a 0.8 threshold is preferable is credit card fraud detection because credit card companies want to reduce how often false positives happen. Otherwise customers may not be happy with the constant declines when they try to make a purchase that are slightly unusual.
